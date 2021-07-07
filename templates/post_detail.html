@@ -1,0 +1,29 @@
+{% extends "index.html" %}
+{% block title %}Post detail{% endblock %}
+{% block body %}
+<div class="container">
+    <div class="row">
+        <article id="" class="post">
+            {{ data }}
+            {% for post in data %}
+            {{ post.title }}
+            <div class="detail-wrap">
+                <header class="entry-header">
+                    <h1 class="entry-title">
+                        {{ post.title }}
+                    </h1>
+                    <div class="author-date">
+                        <span class="author">{{ post['author'] }}</span>
+                        <span class="separator">/</span>
+                        <span class="posted-on">{{ post['now_date'] }}</span>
+                    </div>
+                </header>
+                <div class="entry-content">
+                    <p>{{ post['text'] }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </article>
+    </div>
+</div>
+{% endblock %}

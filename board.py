@@ -19,7 +19,8 @@ class Board:
                                      autoescape=True)
         self.url_map = Map([
             Rule('/', endpoint='index'),
-            Rule('/new_post', endpoint='new_post')
+            Rule('/new_post', endpoint='new_post'),
+            Rule('/<id>', endpoint='post_detail')
         ])
 
     def render_template(self, template_name, **context):
@@ -37,7 +38,7 @@ class Board:
     def on_new_post(self, request):
         if request.method == 'POST':
             if required_fields(request):
-                data = dict()
+                data = {}
                 id = self.redis.incr(0)
                 data['id'] = str(id)
                 data['author'] = request.form['author']
@@ -45,12 +46,21 @@ class Board:
                 data['text'] = request.form['text']
                 data['now_date'] = str(datetime.now().date())
                 data['now_time'] = str(datetime.now().time())[:8]
-                data = str(data)
-                print(type(data))
-                # self.redis.rpush("posts", data)
-                # print(self.redis.hgetall("posts"))
+                self.redis.set(id, data)
+                print(self.redis.keys())
+                print(self.redis.get('11'))
                 # return redirect('/')
         return self.render_template('new_post.html')
+
+    def on_post_detail(self, request, id):
+        data = {'post': self.redis.get(id)}
+        print(type(data))
+        print('data', data['post'].decode('utf-8'))
+        print('type data', type(data['post'].decode('utf-8')))
+        return self.render_template(
+            'post_detail.html',
+            data=data['post'].decode('utf-8')
+        )
 
     def on_index(self, request):
         return self.render_template('index.html')
