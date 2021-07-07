@@ -1,3 +1,4 @@
+import hashlib
 import os
 import redis
 import json
@@ -46,21 +47,25 @@ class Board:
                 data['text'] = request.form['text']
                 data['now_date'] = str(datetime.now().date())
                 data['now_time'] = str(datetime.now().time())[:8]
-                self.redis.set(id, data)
-                print(self.redis.keys())
-                print(self.redis.get('11'))
+                self.redis.hmset(id, data)
+                print(self.redis.hgetall(id))
                 # return redirect('/')
         return self.render_template('new_post.html')
 
     def on_post_detail(self, request, id):
-        data = {'post': self.redis.get(id)}
+        data = self.redis.hgetall(id)
+        print('data', data)
         print(type(data))
-        print('data', data['post'].decode('utf-8'))
-        print('type data', type(data['post'].decode('utf-8')))
-        return self.render_template(
-            'post_detail.html',
-            data=data['post'].decode('utf-8')
-        )
+        decoded_data = {}
+        for key, val in data.items():
+            decoded_data[key.decode('utf-8')] = val.decode('utf-8')
+            # print(key.decode('utf-8'), val.decode('utf-8'))
+        print(decoded_data)
+        if decoded_data:
+            return self.render_template(
+                'post_detail.html',
+                data=decoded_data
+            )
 
     def on_index(self, request):
         return self.render_template('index.html')
