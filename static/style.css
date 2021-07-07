@@ -1,0 +1,53 @@
+h1, h2, h3, h4, h5, h6,
+.entry-header h2.entry-title a, .related-posts .news-item.three-column-item .news-text-wrap h2 a {
+	color: #404040;
+}
+
+form {
+    width: 100%;
+}
+
+.site-title {
+    margin: 0;
+    padding: 0px 0 10px 0;
+}
+
+.site-title a {
+    color: #222222;
+    font-size: 40px;
+    font-family: 'Droid Serif', sans-serif;
+    letter-spacing: 5px;
+    text-transform: none;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.site-title a:hover {
+    outline: 0;
+    cursor: pointer;
+    text-decoration: none;
+    color: #222222;
+}
+
+.site-description {
+    color: #818181;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+#content {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    display: block;
+    clear: both;
+}
+
+.site-content {
+    overflow: hidden;
+}
+
+.site-main {
+    width: 100%;
+}
