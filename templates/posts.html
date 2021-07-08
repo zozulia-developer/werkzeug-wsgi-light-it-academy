@@ -19,14 +19,16 @@
                         <span class="posted-on">{{ post['posted_on'] }}</span>
                     </div>
                 </header>
-                <div class="entry-content">
+                <div class="entry-content mt-1">
                     <p>{{ post['text'] }}</p>
+                    {% if post['text']|length > 90 %}
                     <p>
                         <a href="/{{ post['id'] }}" class="btn-continue">
                             Continue Reading
                             <span class="arrow-continue">→</span>
                         </a>
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </article>

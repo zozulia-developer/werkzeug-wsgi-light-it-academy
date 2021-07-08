@@ -1,9 +1,7 @@
-import hashlib
 import os
 import redis
 import json
 from datetime import datetime
-from werkzeug.urls import url_parse
 from werkzeug.wrappers import Request, Response
 from werkzeug.routing import Map, Rule
 from werkzeug.exceptions import HTTPException, NotFound
@@ -39,40 +37,19 @@ class Board:
     def on_new_post(self, request):
         if request.method == 'POST':
             if required_fields_post(request):
-                data = {}
-                id = self.redis.incr(0)
-                now_date = datetime.now()
-                data['id'] = str(id)
-                data['author'] = request.form['author']
-                data['title'] = request.form['title']
-                data['text'] = request.form['text']
-                data['posted_on'] = now_date.strftime('%d-%m-%Y %H:%M:%S')
-                self.redis.hmset(id, data)
+                self.create_new_post(request)
                 return redirect('/')
         return self.render_template('new_post.html')
 
     def on_post_detail(self, request, id):
-        data = self.redis.hgetall(id)
-        decoded_data = {'comments': None}
-        comments = {}
-        comments_list = []
+        decoded_data = self.get_post(request, id)
+        if not decoded_data:
+            raise NotFound
+        comments_list = self.get_comments(request, id)
         if request.method == 'POST':
             if required_fields_comment(request):
-                comments['author'] = request.form['author']
-                comments['text'] = request.form['text']
-                comments['post_id'] = id
-                comments = json.dumps(comments)
-                self.redis.rpush('comments', comments)
-        for key, val in data.items():
-            if type(val) != list:
-                decoded_data[key.decode('utf-8')] = val.decode('utf-8')
-        for el in self.redis.lrange("comments", 0, -1):
-            el = el.decode('utf-8')
-            el = json.loads(el)
-            if el['post_id'] == str(id):
-                comments_list.append(el)
+                self.create_new_comment(request, id)
         decoded_data['comments'] = comments_list[::-1]
-        print('decoded data', decoded_data)
         if decoded_data:
             return self.render_template(
                 'post_detail.html',
@@ -88,14 +65,53 @@ class Board:
             encode_data = self.redis.hgetall(el)
             decoded_data = {}
             for key, val in encode_data.items():
-                if key.decode('utf-8') == 'text':
-                    decoded_data[key.decode('utf-8')] = val.decode('utf-8')[:101] + ' ...'
+                key = key.decode('utf-8')
+                val = val.decode('utf-8')
+                if key == 'text' and len(val) >= 90:
+                    decoded_data[key] = val[:91] + '...'
                 else:
-                    decoded_data[key.decode('utf-8')] = val.decode('utf-8')
+                    decoded_data[key] = val
             posts.append(decoded_data)
-        print(posts)
-        posts = posts[::-1]
+        posts.sort(key=lambda x: x['id'], reverse=True)
         return self.render_template('posts.html', posts=posts)
+
+    def create_new_post(self, request):
+        data = {}
+        id = self.redis.incr(0)
+        now_date = datetime.now()
+        data['id'] = str(id)
+        data['author'] = request.form['author']
+        data['title'] = request.form['title']
+        data['text'] = request.form['text']
+        data['posted_on'] = now_date.strftime('%d-%m-%Y %H:%M:%S')
+        self.redis.hmset(id, data)
+
+    def create_new_comment(self, request, id):
+        comments = {}
+        comments['author'] = request.form['author']
+        comments['text'] = request.form['text']
+        comments['post_id'] = id
+        comments = json.dumps(comments)
+        self.redis.rpush('comments', comments)
+
+    def get_post(self, request, id):
+        data = self.redis.hgetall(id)
+        dec_data = {}
+        for key, val in data.items():
+            key = key.decode('utf-8')
+            val = val.decode('utf-8')
+            if type(val) != list:
+                dec_data[key] = val
+        return dec_data
+
+    def get_comments(self, request, id):
+        comments_list = []
+        for comment in self.redis.lrange("comments", 0, -1):
+            comment = comment.decode('utf-8')
+            comment = json.loads(comment)
+            if comment['post_id'] == str(id):
+                comments_list.append(comment)
+        return comments_list
 
     def wsgi_app(self, environ, start_response):
         request = Request(environ)
