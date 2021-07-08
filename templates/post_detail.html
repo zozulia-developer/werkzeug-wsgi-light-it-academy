@@ -6,13 +6,15 @@
         <article id="" class="post w-100">
             <div class="detail-wrap">
                 <header class="entry-header">
-                    <h1 class="entry-title">
-                        {{ data.title }}
-                    </h1>
+                    <a href="/{{ data.id }}">
+                        <h1 class="entry-title">
+                            {{ data.title }}
+                        </h1>
+                    </a>
                     <div class="author-date">
-                        <span class="author">{{ data.author }}</span>
+                        <span class="author">Author: {{ data.author }}</span>
                         <span class="separator">/</span>
-                        <span class="posted-on">{{ data.now_date }}</span>
+                        <span class="posted-on">{{ data.posted_on }}</span>
                     </div>
                 </header>
                 <div class="entry-content">
@@ -20,6 +22,57 @@
                 </div>
             </div>
         </article>
+        <div class="post new-comment w-100">
+            <header class="comment-header">
+                <h4>Add comment:</h4>
+            </header>
+            <div class="entry-comment">
+                <form action="/{{ data.id }}" method="POST">
+                    <div class="form-group">
+                        <label for="author">Author</label>
+                        <input
+                                type="text"
+                                class="form-control"
+                                name="author"
+                                maxlength="100"
+                                id="author"
+                                placeholder="Enter author">
+                    </div>
+                    <div class="form-group">
+                        <label for="text">Comment</label>
+                        <textarea
+                                class="form-control"
+                                name="text"
+                                maxlength="200"
+                                id="text"
+                                rows="3"
+                                placeholder="Enter comment"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">Post comment</button>
+                </form>
+            </div>
+        </div>
+        <div class="post comments w-100">
+            <header class="comments-header">
+                <h4>Comments:</h4>
+                <hr/>
+            </header>
+            {% for comment in data.comments %}
+            <div class="comment mb-4">
+                <div class="author">
+                    <span class="comment-author">
+                        {{ comment['author'] }}
+                    </span>
+                </div>
+                <div class="text">
+                    <p class="comment-text">
+                        {{ comment['text'] }}
+                    </p>
+                </div>
+            </div>
+            <hr/>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

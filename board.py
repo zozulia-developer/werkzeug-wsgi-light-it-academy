@@ -38,29 +38,41 @@ class Board:
 
     def on_new_post(self, request):
         if request.method == 'POST':
-            if required_fields(request):
+            if required_fields_post(request):
                 data = {}
                 id = self.redis.incr(0)
+                now_date = datetime.now()
                 data['id'] = str(id)
                 data['author'] = request.form['author']
                 data['title'] = request.form['title']
                 data['text'] = request.form['text']
-                data['now_date'] = str(datetime.now().date())
-                data['now_time'] = str(datetime.now().time())[:8]
+                data['posted_on'] = now_date.strftime('%d-%m-%Y %H:%M:%S')
                 self.redis.hmset(id, data)
-                print(self.redis.hgetall(id))
-                # return redirect('/')
+                return redirect('/')
         return self.render_template('new_post.html')
 
     def on_post_detail(self, request, id):
         data = self.redis.hgetall(id)
-        print('data', data)
-        print(type(data))
-        decoded_data = {}
+        decoded_data = {'comments': None}
+        comments = {}
+        comments_list = []
+        if request.method == 'POST':
+            if required_fields_comment(request):
+                comments['author'] = request.form['author']
+                comments['text'] = request.form['text']
+                comments['post_id'] = id
+                comments = json.dumps(comments)
+                self.redis.rpush('comments', comments)
         for key, val in data.items():
-            decoded_data[key.decode('utf-8')] = val.decode('utf-8')
-            # print(key.decode('utf-8'), val.decode('utf-8'))
-        print(decoded_data)
+            if type(val) != list:
+                decoded_data[key.decode('utf-8')] = val.decode('utf-8')
+        for el in self.redis.lrange("comments", 0, -1):
+            el = el.decode('utf-8')
+            el = json.loads(el)
+            if el['post_id'] == str(id):
+                comments_list.append(el)
+        decoded_data['comments'] = comments_list[::-1]
+        print('decoded data', decoded_data)
         if decoded_data:
             return self.render_template(
                 'post_detail.html',
@@ -68,7 +80,22 @@ class Board:
             )
 
     def on_index(self, request):
-        return self.render_template('index.html')
+        redis_keys = self.redis.keys()
+        posts = []
+        for el in redis_keys:
+            if el == b'0' or el == b'comments':
+                continue
+            encode_data = self.redis.hgetall(el)
+            decoded_data = {}
+            for key, val in encode_data.items():
+                if key.decode('utf-8') == 'text':
+                    decoded_data[key.decode('utf-8')] = val.decode('utf-8')[:101] + ' ...'
+                else:
+                    decoded_data[key.decode('utf-8')] = val.decode('utf-8')
+            posts.append(decoded_data)
+        print(posts)
+        posts = posts[::-1]
+        return self.render_template('posts.html', posts=posts)
 
     def wsgi_app(self, environ, start_response):
         request = Request(environ)
@@ -79,8 +106,14 @@ class Board:
         return self.wsgi_app(environ, start_response)
 
 
-def required_fields(request: Request) -> bool:
+def required_fields_post(request: Request) -> bool:
     if request.form['author'] and request.form['title'] and request.form['text']:
+        return True
+    return False
+
+
+def required_fields_comment(request: Request) -> bool:
+    if request.form['author'] and request.form['text']:
         return True
     return False
 
@@ -99,5 +132,6 @@ def create_app(redis_host='localhost', redis_port=6379, with_static=True):
 
 if __name__ == '__main__':
     from werkzeug.serving import run_simple
+
     app = create_app()
     run_simple('127.0.0.1', 5000, app, use_debugger=True, use_reloader=True)

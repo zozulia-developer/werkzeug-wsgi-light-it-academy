@@ -1,0 +1,37 @@
+{% extends "index.html" %}
+{% block title %}Python Board{% endblock %}
+{% block body %}
+
+{% for post in posts %}
+<div class="container mt-4">
+    <div class="row">
+        <article id="" class="post w-100">
+            <div class="detail-wrap">
+                <header class="entry-header">
+                    <a href="/{{ post['id'] }}">
+                        <h1 class="entry-title">
+                            {{ post['title'] }}
+                        </h1>
+                    </a>
+                    <div class="author-date">
+                        <span class="author">Author: {{ post['author'] }}</span>
+                        <span class="separator">/</span>
+                        <span class="posted-on">{{ post['posted_on'] }}</span>
+                    </div>
+                </header>
+                <div class="entry-content">
+                    <p>{{ post['text'] }}</p>
+                    <p>
+                        <a href="/{{ post['id'] }}" class="btn-continue">
+                            Continue Reading
+                            <span class="arrow-continue">→</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+{% endfor %}
+    
+{% endblock %}

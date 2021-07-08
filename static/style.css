@@ -78,3 +78,18 @@ form {
     text-transform: capitalize;
     color: #ea9920;
 }
+
+.entry-content p a.btn-continue {
+	float: right;
+	letter-spacing: inherit;
+	display: inline-block;
+	position: relative;
+	color: #ea9920;
+}
+
+div.comment.mb-4 div.author span.comment-author {
+    font-size: 20px;
+    font-weight: bold;
+    text-transform: capitalize;
+    color: #ea9920;
+}
